@@ -1,0 +1,56 @@
+tasks:
+  analyze_prompt:
+    agent: "prompt_analyst"
+    description: >
+      Interpret the user's input and identify:
+      - Project type
+      - Required stack
+      - Functional requirements
+      - Output expectations
+    expected_output: >
+      JSON object with keys: {"project_type": str, "stack": str, "requirements": [list], "goal": str}
+
+  design_architecture:
+    agent: "architect"
+    description: >
+      Use the analysis from the Prompt Analyst to create a JSON-based file structure plan
+      with folder hierarchy, dependencies, and a short description for each file.
+    expected_output: >
+      JSON array with file paths, types (frontend/backend/config), and descriptions.
+
+  plan_tasks:
+    agent: "planner"
+    description: >
+      Convert the architecture JSON into separate task batches for backend, frontend, and documentation.
+    expected_output: >
+      JSON object: {"backend": [list of files], "frontend": [list of files], "docs": [list of files]}
+
+  generate_backend:
+    agent: "backend_engineer"
+    description: >
+      For each backend file in the plan, write complete source code following best practices.
+    expected_output: >
+      Dictionary of {filename: code_content} for backend files.
+
+  generate_frontend:
+    agent: "frontend_engineer"
+    description: >
+      For each frontend file, write complete source code using React (or chosen frontend stack).
+    expected_output: >
+      Dictionary of {filename: code_content} for frontend files.
+
+  integrate_project:
+    agent: "integrator"
+    description: >
+      Merge backend and frontend outputs into a single folder structure.
+      Validate imports, ensure scripts run correctly, and handle conflicts.
+    expected_output: >
+      Folder tree dictionary representing the merged project structure.
+
+  review_and_document:
+    agent: "reviewer"
+    description: >
+      Check the integrated project for errors, add inline documentation,
+      generate README.md, and produce a summary report of recommendations.
+    expected_output: >
+      Final folder tree + README.md + summary report.
