@@ -37,12 +37,19 @@ filelock==3.20.0
 flatbuffers==25.9.23
 frozenlist==1.8.0
 fsspec==2025.9.0
+google-ai-generativelanguage==0.6.15
+google-api-core==2.26.0
+google-api-python-client==2.185.0
 google-auth==2.41.1
+google-auth-httplib2==0.2.0
+google-generativeai==0.8.5
 googleapis-common-protos==1.71.0
 grpcio==1.76.0
+grpcio-status==1.71.2
 h11==0.16.0
 hf-xet==1.1.10
 httpcore==1.0.9
+httplib2==0.31.0
 httptools==0.7.1
 httpx==0.28.1
 httpx-sse==0.4.3
@@ -106,7 +113,8 @@ portalocker==2.7.0
 posthog==5.4.0
 prompt_toolkit==3.0.52
 propcache==0.4.1
-protobuf==6.33.0
+proto-plus==1.26.1
+protobuf==5.29.5
 psutil==7.1.1
 ptyprocess==0.7.0
 pure_eval==0.2.3
@@ -121,6 +129,7 @@ pydantic_core==2.41.4
 Pygments==2.19.2
 PyJWT==2.10.1
 pylance==0.38.2
+pyparsing==3.2.5
 pypdf==6.1.2
 pypdfium2==4.30.0
 PyPika==0.48.9
@@ -159,6 +168,7 @@ traitlets==5.14.3
 typer==0.20.0
 typing-inspection==0.4.2
 typing_extensions==4.15.0
+uritemplate==4.2.0
 urllib3==2.3.0
 uv==0.9.5
 uvicorn==0.38.0
