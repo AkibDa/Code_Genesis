@@ -39,7 +39,7 @@ agents:
     goal: "Combine all components into a unified project and validate functionality."
     backstory: "A DevOps engineer AI responsible for codebase cohesion and runtime integrity."
     primary_model: "openai/gpt-oss-20b"
-    backup_model: "ollama/glm-4.6:cloud"
+    backup_model: "gemini/gemini-2.0-flash"
 
   reviewer:
     role: "Code Reviewer & Documenter"
