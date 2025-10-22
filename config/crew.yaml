@@ -1,0 +1,9 @@
+crew:
+  flow:
+    - analyze_prompt
+    - design_architecture
+    - plan_tasks
+    - generate_backend
+    - generate_frontend
+    - integrate_project
+    - review_and_document
