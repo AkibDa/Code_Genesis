@@ -2,9 +2,11 @@ from dotenv import load_dotenv # type: ignore
 from langchain_groq import ChatGroq # type: ignore
 from langgraph.constants import END # type: ignore
 from langgraph.graph import StateGraph # type: ignore
+from langgraph.agents.react_agent import create_react_agent # type: ignore
 
 from prompt import *
 from states import *
+from tools import *
 
 _ = load_dotenv()
 
@@ -71,7 +73,7 @@ graph = StateGraph(dict)
 
 graph.add_node("planner", planner_agent)
 graph.add_node("architect", architect_agent)
-graph.add_node("coder", code_agent)
+graph.add_node("coder", coder_agent)
 
 graph.add_edge("planner", "architect")
 graph.add_edge("architect", "coder")
