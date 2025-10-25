@@ -1,17 +1,22 @@
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 load_dotenv()
 
 llm = ChatGroq(model="openai/gpt-oss-120b")
 
-class Schema(BaseModel):
-  price : float
-  eps : float
+user_prompt = "Create a simple calculator web application"
 
-response = llm.with_structured_output(Schema).invoke("Extract Price and EPS from this report: "
-                                                     "NVIDIA reported quarterly EPS of 2.3 and "
-                                                     "their current price is $100.")
+prompt = f"""
+You are the PLANNER agent. Convert the user prompt into a COMPLETE engineering project plan
+
+User request: {user_prompt}
+"""
+
+class Plan(BaseModel):
+  pass
+
+response = llm.with_structured_output(Plan).invoke(prompt)
 
 print(response)
