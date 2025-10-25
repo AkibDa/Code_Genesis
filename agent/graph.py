@@ -1,16 +1,21 @@
-from dotenv import load_dotenv # type: ignore
-from langchain_groq import ChatGroq # type: ignore
-from langgraph.constants import END # type: ignore
-from langgraph.graph import StateGraph # type: ignore
-from langgraph.agents.react_agent import create_react_agent # type: ignore
+#agent/graph.py
+
+from dotenv import load_dotenv
+from langchain_groq.chat_models import ChatGroq
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langgraph.constants import END
+from langgraph.graph import StateGraph
+from langgraph.prebuilt import create_react_agent
 
 from prompt import *
 from states import *
-from tools import *
+from tools import write_file, read_file, get_current_directory, list_files
 
 _ = load_dotenv()
 
 llm = ChatGroq(model="openai/gpt-oss-120b")
+# llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
+
 
 def planner_agent(state: dict) -> dict:
   """Converts user prompt into a structured Plan."""
@@ -21,6 +26,7 @@ def planner_agent(state: dict) -> dict:
   if resp is None:
     raise ValueError("Planner did not return a valid response.")
   return {"plan": resp}
+
 
 def architect_agent(state: dict) -> dict:
   """Creates TaskPlan from Plan."""
@@ -34,6 +40,7 @@ def architect_agent(state: dict) -> dict:
   resp.plan = plan
   print(resp.model_dump_json())
   return {"task_plan": resp}
+
 
 def coder_agent(state: dict) -> dict:
   """LangGraph tool-using coder agent."""
@@ -60,14 +67,11 @@ def coder_agent(state: dict) -> dict:
   react_agent = create_react_agent(llm, coder_tools)
 
   react_agent.invoke({"messages": [{"role": "system", "content": system_prompt},
-    {"role": "user", "content": user_prompt}]})
+  {"role": "user", "content": user_prompt}]})
 
   coder_state.current_step_idx += 1
   return {"coder_state": coder_state}
 
-# response = llm.with_structured_output(Plan).invoke(planner_prompt(user_prompt))
-
-# print(response)
 
 graph = StateGraph(dict)
 
@@ -85,9 +89,7 @@ graph.add_conditional_edges(
 
 graph.set_entry_point("planner")
 agent = graph.compile()
-
 if __name__ == "__main__":
-  user_prompt = "Create a simple calculator web application"
-  
-  result = agent.invoke({"user_prompt": user_prompt})
-  print(result)
+  result = agent.invoke({"user_prompt": "Build a colourful modern todo app in html css and js"},
+{"recursion_limit": 100})
+  print("Final State:", result)
