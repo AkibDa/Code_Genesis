@@ -16,9 +16,15 @@ def planner_agent(state: dict) -> dict:
   resp = llm.with_structured_output(Plan).invoke(users_prompt)
   return {"plan": resp, END: True}
 
-response = llm.with_structured_output(Plan).invoke(planner_prompt(user_prompt))
+# response = llm.with_structured_output(Plan).invoke(planner_prompt(user_prompt))
 
-print(response)
+# print(response)
 
 graph = StateGraph(dict)
 graph.add_node("planner", planner_agent)
+graph.set_entry_point("planner")
+
+agent = graph.compile()
+
+result = agent.invoke({"user_prompt": user_prompt})
+print(result)
