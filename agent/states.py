@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict # type: ignore
 
 class File(BaseModel):
   path : str = Field(description="The file path where the file should be created, e.g. 'src/App.js'")

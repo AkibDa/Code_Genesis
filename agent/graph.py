@@ -1,15 +1,14 @@
-from dotenv import load_dotenv
-from langchain_groq import ChatGroq
+from dotenv import load_dotenv # type: ignore
+from langchain_groq import ChatGroq # type: ignore
+from langgraph.constants import END # type: ignore
+from langgraph.graph import StateGraph # type: ignore
+
 from prompt import *
 from states import *
-from langgraph.constants import END
-from langgraph.graph import StateGraph
 
-load_dotenv()
+_ = load_dotenv()
 
 llm = ChatGroq(model="openai/gpt-oss-120b")
-
-user_prompt = "Create a simple calculator web application"
 
 def planner_agent(state: dict) -> dict:
   """Converts user prompt into a structured Plan."""
@@ -48,5 +47,8 @@ graph.add_edge("planner", "architect")
 graph.set_entry_point("planner")
 agent = graph.compile()
 
-result = agent.invoke({"user_prompt": user_prompt})
-print(result)
+if __name__ == "__main__":
+  user_prompt = "Create a simple calculator web application"
+  
+  result = agent.invoke({"user_prompt": user_prompt})
+  print(result)
