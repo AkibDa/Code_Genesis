@@ -1,9 +1,10 @@
 #agent/graph.py
 
 from dotenv import load_dotenv
+from langchain_core.globals import set_verbose, set_debug
 from langchain_groq.chat_models import ChatGroq
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import HumanMessage  # <-- ADD THIS IMPORT
+from langchain_core.messages import HumanMessage
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import create_react_agent
 
@@ -12,6 +13,9 @@ from states import *
 from tools import *
 
 _ = load_dotenv()
+
+set_debug(True)
+set_verbose(True)
 
 llm = ChatGroq(model="openai/gpt-oss-120b")
 # llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")

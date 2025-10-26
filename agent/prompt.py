@@ -34,9 +34,6 @@ Do not add any other text, markdown, or explanation.
   """
   return ARCHITECT_PROMPT
 
-
-# agent/prompt.py
-
 def coder_system_prompt() -> str:
   CODER_SYSTEM_PROMPT = """
 You are the CODER agent.

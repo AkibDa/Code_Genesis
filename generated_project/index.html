@@ -3,35 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ColorfulTodo</title>
+    <title>Task Manager</title>
     <link rel="stylesheet" href="styles.css">
     <script src="script.js" defer></script>
 </head>
 <body>
-    <main class="todo-app">
-        <header class="app-header">
-            <h1>ColorfulTodo</h1>
-            <!-- Theme selector (color palette) -->
-            <select id="theme-selector" aria-label="Select theme">
-                <option value="default">Default</option>
-                <option value="dark">Dark</option>
-                <option value="light">Light</option>
-                <!-- Additional themes can be added here -->
-            </select>
-        </header>
-        <form class="todo-form" id="todo-form" autocomplete="off">
-            <input id="new-todo-input" type="text" placeholder="What needs to be done?" aria-label="New todo" required />
-            <button id="add-todo-btn" type="submit" aria-label="Add todo">Add</button>
-        </form>
-        <section class="filters">
-            <button class="filter-btn" data-filter="all">All</button>
-            <button class="filter-btn" data-filter="active">Active</button>
-            <button class="filter-btn" data-filter="completed">Completed</button>
+    <header class="app-header">
+        <h1 class="app-title">Task Manager</h1>
+    </header>
+
+    <main class="app-main">
+        <section class="task-creation">
+            <form id="task-form" class="task-form">
+                <input type="text" id="new-task-input" class="task-input" placeholder="New task..." required>
+                <input type="date" id="new-task-due" class="task-due-input">
+                <button type="submit" class="task-submit-btn">Add Task</button>
+            </form>
         </section>
-        <ul id="todo-list" class="todo-list" aria-live="polite"></ul>
-        <footer class="app-footer">
-            <p>Made with ❤️ by <a href="https://github.com/yourusername" target="_blank" rel="noopener">Your Name</a></p>
-        </footer>
+
+        <section class="task-filter">
+            <button id="filter-all" class="filter-btn active">All</button>
+            <button id="filter-active" class="filter-btn">Active</button>
+            <button id="filter-completed" class="filter-btn">Completed</button>
+        </section>
+
+        <section class="theme-selector">
+            <label for="theme-select">Theme:</label>
+            <select id="theme-select" class="theme-select">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="blue">Blue</option>
+                <option value="green">Green</option>
+            </select>
+        </section>
+
+        <section class="task-list-section">
+            <ul id="task-list" class="task-list">
+                <!-- Task items will be injected here -->
+            </ul>
+        </section>
     </main>
 </body>
 </html>

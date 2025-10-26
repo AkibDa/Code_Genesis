@@ -1,0 +1,369 @@
+/*
+    styles.css – Themeable, responsive stylesheet for Task Manager app
+    ---------------------------------------------------------------
+    This stylesheet defines CSS custom properties (variables) for colour themes,
+    provides layout using Flexbox/Grid, styles the header, form, task list,
+    filter/buttons, and includes utilities for task states (completed,
+    dragging) as well as responsive adjustments and transition animations.
+*/
+
+/* --------------------------------------------------------------------------
+   Default colour palette (light theme)
+   -------------------------------------------------------------------------- */
+:root {
+    /* Core palette */
+    --primary:   #6200ea;   /* Indigo */
+    --secondary: #03dac6;   /* Teal */
+    --accent:    #ff4081;   /* Pink */
+    --background: #fafafa; /* Light grey */
+    --surface:    #ffffff; /* Card / list background */
+    --text-primary:   #212121; /* Dark text */
+    --text-secondary: #757575; /* Secondary text */
+    --border-radius: 8px;
+    --transition-duration: 0.3s;
+}
+
+/* --------------------------------------------------------------------------
+   Theme modifiers – they override the root variables when applied to <html>
+   -------------------------------------------------------------------------- */
+html.theme-light {
+    --primary:   #6200ea;
+    --secondary: #03dac6;
+    --accent:    #ff4081;
+    --background: #fafafa;
+    --surface:    #ffffff;
+    --text-primary:   #212121;
+    --text-secondary: #757575;
+}
+
+html.theme-dark {
+    --primary:   #bb86fc;
+    --secondary: #03dac6;
+    --accent:    #ff4081;
+    --background: #121212;
+    --surface:    #1e1e1e;
+    --text-primary:   #e0e0e0;
+    --text-secondary: #b0b0b0;
+}
+
+html.theme-blue {
+    --primary:   #2962ff;   /* Blue 700 */
+    --secondary: #03a9f4;   /* Light Blue */
+    --accent:    #ff4081;
+    --background: #e3f2fd; /* Light blue background */
+    --surface:    #ffffff;
+    --text-primary:   #212121;
+    --text-secondary: #424242;
+}
+
+html.theme-green {
+    --primary:   #2e7d32;   /* Green 800 */
+    --secondary: #66bb6a;   /* Light Green */
+    --accent:    #ff4081;
+    --background: #e8f5e9; /* Light green background */
+    --surface:    #ffffff;
+    --text-primary:   #212121;
+    --text-secondary: #424242;
+}
+
+html.theme-pink {
+    --primary:   #c2185b;   /* Pink 800 */
+    --secondary: #f48fb1;   /* Light Pink */
+    --accent:    #ffab40;
+    --background: #fce4ec; /* Light pink background */
+    --surface:    #ffffff;
+    --text-primary:   #212121;
+    --text-secondary: #424242;
+}
+
+/* --------------------------------------------------------------------------
+   Global resets & utilities
+   -------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--background);
+    color: var(--text-primary);
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --------------------------------------------------------------------------
+   Header
+   -------------------------------------------------------------------------- */
+.app-header {
+    background: var(--primary);
+    color: #fff;
+    padding: 1rem 2rem;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.app-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   Main layout – Flexbox grid for larger screens
+   -------------------------------------------------------------------------- */
+.app-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 960px;
+    margin: 2rem auto;
+    width: 90%;
+}
+
+/* Sections share a consistent inner padding */
+.app-main > section {
+    background: var(--surface);
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* --------------------------------------------------------------------------
+   Task creation form
+   -------------------------------------------------------------------------- */
+.task-form {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.task-input,
+.task-due-input {
+    flex: 1 1 200px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--text-secondary);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    background: var(--background);
+    color: var(--text-primary);
+    transition: border-color var(--transition-duration);
+}
+
+.task-input:focus,
+.task-due-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.task-submit-btn {
+    background: var(--secondary);
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 600;
+    transition: background var(--transition-duration);
+}
+
+.task-submit-btn:hover {
+    background: var(--accent);
+}
+
+/* --------------------------------------------------------------------------
+   Filter buttons
+   -------------------------------------------------------------------------- */
+.filter-btn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    margin-right: 0.5rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background var(--transition-duration), opacity var(--transition-duration);
+}
+
+.filter-btn.active,
+.filter-btn:hover {
+    background: var(--accent);
+}
+
+/* --------------------------------------------------------------------------
+   Theme selector
+   -------------------------------------------------------------------------- */
+.theme-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.theme-select {
+    padding: 0.4rem 0.6rem;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--text-secondary);
+    background: var(--background);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: border-color var(--transition-duration);
+}
+
+.theme-select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* --------------------------------------------------------------------------
+   Task list & items
+   -------------------------------------------------------------------------- */
+.task-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0;
+    margin: 0;
+}
+
+.task-item {
+    background: var(--background);
+    padding: 0.75rem 1rem;
+    margin: 0.25rem 0;
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    transition: background var(--transition-duration),
+                opacity var(--transition-duration),
+                transform var(--transition-duration);
+    cursor: grab;
+}
+
+.task-item.dragging {
+    opacity: 0.5;
+    border: 2px dashed var(--accent);
+    cursor: grabbing;
+}
+
+.task-item .task-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.task-item .task-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.task-item .task-due {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.task-item .task-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.task-item button {
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0.2rem;
+    transition: color var(--transition-duration);
+}
+
+.task-item button:hover {
+    color: var(--accent);
+}
+
+/* Completed state */
+.task-item.completed .task-title {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+/* --------------------------------------------------------------------------
+   Animations – simple fade/slide for add/remove
+   -------------------------------------------------------------------------- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-0.5rem); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(0.5rem); }
+}
+
+.task-item.enter {
+    animation: fadeIn var(--transition-duration) forwards;
+}
+
+.task-item.leave {
+    animation: fadeOut var(--transition-duration) forwards;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive design – mobile first
+   -------------------------------------------------------------------------- */
+@media (max-width: 600px) {
+    .app-main {
+        width: 95%;
+        margin: 1rem auto;
+    }
+
+    .task-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .task-input,
+    .task-due-input,
+    .task-submit-btn {
+        width: 100%;
+        margin: 0.25rem 0;
+    }
+
+    .filter-btn {
+        flex: 1 1 auto;
+        margin: 0.2rem 0;
+    }
+
+    .theme-selector {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .task-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .task-item .task-actions {
+        align-self: flex-end;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Utility classes (optional) – can be used by script.js
+   -------------------------------------------------------------------------- */
+.hidden { display: none !important; }
+
+/* End of stylesheet */
