@@ -16,7 +16,7 @@ def safe_path_for_project(path: str) -> pathlib.Path:
   return p
 
 
-@tool
+@tool(name_or_callable="write_file")
 def write_file(path: str, content: str) -> str:
   """Writes content to a file at the specified path within the project root."""
   p = safe_path_for_project(path)
@@ -26,7 +26,7 @@ def write_file(path: str, content: str) -> str:
   return f"WROTE:{p}"
 
 
-@tool
+@tool(name_or_callable="read_file")
 def read_file(path: str) -> str:
   """Reads content from a file at the specified path within the project root."""
   p = safe_path_for_project(path)
@@ -36,14 +36,14 @@ def read_file(path: str) -> str:
     return f.read()
 
 
-@tool
+@tool(name_or_callable="get_current_directory")
 def get_current_directory() -> str:
   """Returns the current working directory."""
   return str(PROJECT_ROOT)
 
 
-@tool
-def list_files(directory: str = ".") -> str:
+@tool(name_or_callable="list_file")
+def list_file(directory: str = ".") -> str:
   """Lists all files in the specified directory within the project root."""
   p = safe_path_for_project(directory)
   if not p.is_dir():
@@ -51,7 +51,7 @@ def list_files(directory: str = ".") -> str:
   files = [str(f.relative_to(PROJECT_ROOT)) for f in p.glob("**/*") if f.is_file()]
   return "\n".join(files) if files else "No files found."
 
-@tool
+@tool(name_or_callable="run_cmd")
 def run_cmd(cmd: str, cwd: str = None, timeout: int = 30) -> Tuple[int, str, str]:
   """Runs a shell command in the specified directory and returns the result."""
   cwd_dir = safe_path_for_project(cwd) if cwd else PROJECT_ROOT

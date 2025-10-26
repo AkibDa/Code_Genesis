@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ColorfulTodo</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <main class="todo-app">
+        <header class="app-header">
+            <h1>ColorfulTodo</h1>
+            <!-- Theme selector (color palette) -->
+            <select id="theme-selector" aria-label="Select theme">
+                <option value="default">Default</option>
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+                <!-- Additional themes can be added here -->
+            </select>
+        </header>
+        <form class="todo-form" id="todo-form" autocomplete="off">
+            <input id="new-todo-input" type="text" placeholder="What needs to be done?" aria-label="New todo" required />
+            <button id="add-todo-btn" type="submit" aria-label="Add todo">Add</button>
+        </form>
+        <section class="filters">
+            <button class="filter-btn" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="active">Active</button>
+            <button class="filter-btn" data-filter="completed">Completed</button>
+        </section>
+        <ul id="todo-list" class="todo-list" aria-live="polite"></ul>
+        <footer class="app-footer">
+            <p>Made with ❤️ by <a href="https://github.com/yourusername" target="_blank" rel="noopener">Your Name</a></p>
+        </footer>
+    </main>
+</body>
+</html>

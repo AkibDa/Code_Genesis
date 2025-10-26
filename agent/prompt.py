@@ -9,7 +9,6 @@ User request:
   """
   return PLANNER_PROMPT
 
-
 def architect_prompt(plan: str) -> str:
   ARCHITECT_PROMPT = f"""
 You are the ARCHITECT agent. Given this project plan, break it down into explicit engineering tasks.
@@ -26,20 +25,33 @@ RULES:
 
 Project Plan:
 {plan}
+
+---
+IMPORTANT: You must respond *only* with the structured `TaskPlan`.
+The `TaskPlan` consists of a list of `implementation_steps`.
+Each step must have a `filepath` and a `task_description`.
+Do not add any other text, markdown, or explanation.
   """
   return ARCHITECT_PROMPT
 
+
+# agent/prompt.py
 
 def coder_system_prompt() -> str:
   CODER_SYSTEM_PROMPT = """
 You are the CODER agent.
 You are implementing a specific engineering task.
-You have access to tools to read and write files.
+You have access to a set of tools. You MUST use the tools with their exact names.
+
+Available Tools:
+- `write_file(path: str, content: str)`: Writes content to a file at the specified path.
+- `read_file(path: str)`: Reads content from a file at the specified path.
+- `list_file(directory: str = ".")`: Lists all files in the specified directory.
+- `get_current_directory()`: Returns the current working directory.
 
 Always:
-- Review all existing files to maintain compatibility.
-- Implement the FULL file content, integrating with other modules.
+- Use `list_file()` to review existing files before writing.
+- Implement the FULL file content as requested in the task.
 - Maintain consistent naming of variables, functions, and imports.
-- When a module is imported from another file, ensure it exists and is implemented as described.
   """
   return CODER_SYSTEM_PROMPT
