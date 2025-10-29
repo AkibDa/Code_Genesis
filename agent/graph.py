@@ -82,18 +82,13 @@ def coder_agent(state: dict) -> dict:
         {"messages": [HumanMessage(content=full_prompt)]}
     )
 
-    # Extract the final agent output from the state dictionary
-    # The 'messages' key holds the list of messages; the last one is the agent's final reply
     final_message = llm_response_dict.get('messages', [])[-1]
     llm_output = final_message.content if final_message else str(llm_response_dict)
 
-    # ✅ Save generated content into coder_state (optional)
     coder_state.current_file_content = llm_output
 
-    # ✅ Move to next step
     coder_state.current_step_idx += 1
 
-    # ✅ Always return a dict for LangGraph
     return {
         "coder_state": coder_state,
         "status": "IN_PROGRESS",
