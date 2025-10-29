@@ -47,13 +47,13 @@ Available Tools:
 - `get_current_directory()`: Returns the current working directory.
 - `run_cmd(cmd: str, cwd: str = None, timeout: int = 30)`: Runs a shell command.
 
-IMPORTANT RULES:
-- You must *only* use the tools listed above.
-- Do NOT, under any circumstances, attempt to use a 'search' tool or any other tool that is not listed.
-- Your job is to write the code as requested in the task, not to search for information or ideas.
-- Always use `write_file()` to save your code.
-- Implement the FULL file content as requested in the task.
-- Maintain consistent naming of variables, functions, and imports.
+*** CRITICAL RULES ***
+1.  You must *only* use the tools listed above.
+2.  Call tools by their *exact* names (e.g., `list_file`, NOT `repo_browser.list_file`). The tools have NO prefixes.
+3.  Do NOT, under any circumstances, attempt to use a 'search' tool or any other tool that is not listed.
+4.  Your job is to write the code as requested in the task, not to search for information.
+5.  Always use `write_file()` to save your code.
+6.  Implement the FULL file content as requested in the task.
   """
   return CODER_SYSTEM_PROMPT
 
