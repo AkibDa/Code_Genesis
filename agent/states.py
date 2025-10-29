@@ -1,9 +1,7 @@
 # agent/states.py
 
 from typing import Optional
-
 from pydantic import BaseModel, Field, ConfigDict
-
 
 class File(BaseModel):
   path: str = Field(description="The path to the file to be created or modified")
