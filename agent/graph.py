@@ -5,7 +5,7 @@ from typing import TypedDict, Optional
 from dotenv import load_dotenv
 from langchain_core.globals import set_verbose, set_debug
 from langchain_groq.chat_models import ChatGroq
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import create_react_agent
 
@@ -27,15 +27,19 @@ coder_tools = [read_file, write_file, list_file, get_current_directory, run_cmd]
 debugger_tools = [read_file, list_file, get_current_directory, run_cmd]
 
 # --- Create Agents (Outside Nodes) ---
+coder_llm = llm.bind_messages([
+    SystemMessage(content=coder_system_prompt())
+])
 coder_react_agent = create_react_agent(
-    model=llm,
-    tools=coder_tools,
-    system_message=coder_system_prompt()
+    model=coder_llm,
+    tools=coder_tools
 )
+debugger_llm = llm.bind_messages([
+    SystemMessage(content=debugger_system_prompt())
+])
 debugger_react_agent = create_react_agent(
-    model=llm,
-    tools=debugger_tools,
-    system_message=debugger_system_prompt()
+    model=debugger_llm,
+    tools=debugger_tools
 )
 
 # --- Define Graph State ---
