@@ -5,6 +5,8 @@ from typing import TypedDict, Optional
 from dotenv import load_dotenv
 from langchain_core.globals import set_verbose, set_debug
 from langchain_groq.chat_models import ChatGroq
+from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import create_react_agent
@@ -19,8 +21,9 @@ set_debug(True)
 set_verbose(True)
 
 # --- Define LLM and Tools ---
-llm = ChatGroq(model="openai/gpt-oss-120b")
-# llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
+# llm = ChatGroq(model="openai/gpt-oss-120b")
+openai_llm = ChatOpenAI(model="gpt-4o")
+anthropic_llm = ChatAnthropic(model="claude-3-5-sonnet-20240620")
 
 # Define tools for each agent
 coder_tools = [read_file, write_file, list_file, get_current_directory, run_cmd]
@@ -28,11 +31,11 @@ debugger_tools = [read_file, list_file, get_current_directory, run_cmd]
 
 # --- Create Agents (Outside Nodes) ---
 coder_react_agent = create_react_agent(
-    model=llm, # Pass the original llm
+    model=anthropic_llm,
     tools=coder_tools
 )
 debugger_react_agent = create_react_agent(
-    model=llm, # Pass the original llm
+    model=anthropic_llm,
     tools=debugger_tools
 )
 
@@ -51,7 +54,7 @@ def planner_agent(state: AgentState) -> AgentState:
     """Converts user prompt into a structured Plan."""
     print("\n--- PLANNER AGENT ---")
     user_prompt = state["user_prompt"]
-    resp = llm.with_structured_output(Plan).invoke(planner_prompt(user_prompt))
+    resp = openai_llm.with_structured_output(Plan).invoke(planner_prompt(user_prompt))
     if resp is None:
         raise ValueError("Planner did not return a valid response.")
     return {"plan": resp}
@@ -61,7 +64,7 @@ def architect_agent(state: AgentState) -> AgentState:
     """Creates TaskPlan from Plan."""
     print("\n--- ARCHITECT AGENT ---")
     plan: Plan = state["plan"]
-    resp = llm.with_structured_output(TaskPlan).invoke(
+    resp = openai_llm.with_structured_output(TaskPlan).invoke(
         architect_prompt(plan=plan.model_dump_json(indent=2))
     )
     if resp is None:
@@ -140,7 +143,7 @@ def debugger_agent(state: AgentState) -> AgentState:
             bug_report=bug_report,
             original_plan=plan_json
         )
-        fix_plan = llm.with_structured_output(TaskPlan).invoke(fix_prompt)
+        fix_plan = openai_llm.with_structured_output(TaskPlan).invoke(fix_prompt)
         
         print(f"\n[Debugger Fix Plan]:\n{fix_plan.model_dump_json(indent=2)}")
 
@@ -188,3 +191,4 @@ if __name__ == "__main__":
         {"recursion_limit": 100}
     )
     print("\n✅ Final State:\n", result)
+    
