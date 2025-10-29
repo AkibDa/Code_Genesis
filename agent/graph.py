@@ -27,18 +27,12 @@ coder_tools = [read_file, write_file, list_file, get_current_directory, run_cmd]
 debugger_tools = [read_file, list_file, get_current_directory, run_cmd]
 
 # --- Create Agents (Outside Nodes) ---
-coder_llm = llm.bind_messages([
-    SystemMessage(content=coder_system_prompt())
-])
 coder_react_agent = create_react_agent(
-    model=coder_llm,
+    model=llm, # Pass the original llm
     tools=coder_tools
 )
-debugger_llm = llm.bind_messages([
-    SystemMessage(content=debugger_system_prompt())
-])
 debugger_react_agent = create_react_agent(
-    model=debugger_llm,
+    model=llm, # Pass the original llm
     tools=debugger_tools
 )
 
@@ -108,7 +102,7 @@ def coder_agent(state: AgentState) -> AgentState:
     )
 
     llm_response_dict = coder_react_agent.invoke(
-        {"messages": [HumanMessage(content=user_prompt)]}
+        {"messages": [SystemMessage(content=coder_system_prompt()),HumanMessage(content=user_prompt)]}
     )
 
     final_message = llm_response_dict.get('messages', [])[-1]
@@ -132,7 +126,7 @@ def debugger_agent(state: AgentState) -> AgentState:
     
     debug_prompt = debugger_user_prompt(original_plan=plan_json)
     llm_response_dict = debugger_react_agent.invoke(
-        {"messages": [HumanMessage(content=debug_prompt)]}
+        {"messages": [SystemMessage(content=debugger_system_prompt()),HumanMessage(content=debug_prompt)]}
     )
     bug_report = llm_response_dict.get('messages', [])[-1].content
     print(f"\n[Debugger Bug Report]:\n{bug_report}")
