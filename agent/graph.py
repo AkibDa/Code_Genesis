@@ -12,6 +12,7 @@ from langgraph.prebuilt import create_react_agent
 from .prompt import *
 from .states import *
 from .tools import *
+from .utility import *
 
 # --- Load Env and Set Debugging ---
 _ = load_dotenv()
@@ -50,40 +51,34 @@ class AgentState(TypedDict):
 # === Define Graph Nodes ===
 
 def planner_agent(state: AgentState) -> AgentState:
-    """Converts user prompt into a structured Plan."""
     print("\n--- PLANNER AGENT ---")
     new_state = dict(state)
     user_prompt = new_state.get("user_prompt")
     if not user_prompt:
         raise ValueError("planner_agent expects 'user_prompt' in state.")
-    resp = llm.with_structured_output(Plan).invoke(planner_prompt(user_prompt))
+    resp = invoke_structured(llm, Plan, planner_prompt(user_prompt))
     if resp is None:
         raise ValueError("Planner did not return a valid response.")
     new_state["plan"] = resp
     return new_state
 
-
 def architect_agent(state: AgentState) -> AgentState:
-    """Creates TaskPlan from Plan."""
     print("\n--- ARCHITECT AGENT ---")
     new_state = dict(state)
     plan: Plan = new_state.get("plan")
     if plan is None:
         raise ValueError("architect_agent expects 'plan' in state.")
-    resp = llm.with_structured_output(TaskPlan).invoke(
-        architect_prompt(plan=plan.model_dump_json(indent=2))
+    resp = invoke_structured(
+        llm, TaskPlan, architect_prompt(plan=plan.model_dump_json(indent=2))
     )
     if resp is None:
         raise ValueError("Architect did not return a valid response.")
-
-    resp.plan = plan 
+    resp.plan = plan  # type: ignore
     print("\n[Architect Output]\n", resp.model_dump_json(indent=2))
     new_state["task_plan"] = resp
     return new_state
 
-
 def coder_agent(state: AgentState) -> AgentState:
-    """LangGraph tool-using coder agent."""
     print("\n--- CODER AGENT ---")
     new_state = dict(state)
 
@@ -119,8 +114,9 @@ def coder_agent(state: AgentState) -> AgentState:
         "Remember to use `write_file(path, content)` to save your *full* and *complete* changes."
     )
 
-    llm_response_dict = coder_react_agent.invoke(
-        {"messages": [SystemMessage(content=coder_system_prompt()), HumanMessage(content=user_prompt)]}
+    llm_response_dict = invoke_messages(
+        coder_react_agent,
+        [SystemMessage(content=coder_system_prompt()), HumanMessage(content=user_prompt)]
     )
 
     final_message = llm_response_dict.get('messages', [])[-1] if isinstance(llm_response_dict, dict) else None
@@ -136,9 +132,7 @@ def coder_agent(state: AgentState) -> AgentState:
     new_state["last_output"] = coder_state.current_file_content
     return new_state
 
-
 def debugger_agent(state: AgentState) -> AgentState:
-    """Reviews code, finds bugs, and creates a fix plan."""
     print("\n--- DEBUGGER AGENT ---")
     new_state = dict(state)
 
@@ -148,8 +142,9 @@ def debugger_agent(state: AgentState) -> AgentState:
     plan_json = new_state["plan"].model_dump_json(indent=2)
     debug_prompt = debugger_user_prompt(original_plan=plan_json)
 
-    llm_response_dict = debugger_react_agent.invoke(
-        {"messages": [SystemMessage(content=debugger_system_prompt()), HumanMessage(content=debug_prompt)]}
+    llm_response_dict = invoke_messages(
+        debugger_react_agent,
+        [SystemMessage(content=debugger_system_prompt()), HumanMessage(content=debug_prompt)]
     )
     bug_report = llm_response_dict.get('messages', [])[-1].content
     print(f"\n[Debugger Bug Report]:\n{bug_report}")
@@ -164,7 +159,7 @@ def debugger_agent(state: AgentState) -> AgentState:
             bug_report=bug_report,
             original_plan=plan_json
         )
-        fix_plan = llm.with_structured_output(TaskPlan).invoke(fix_prompt)
+        fix_plan = invoke_structured(llm, TaskPlan, fix_prompt)
 
         print(f"\n[Debugger Fix Plan]:\n{fix_plan.model_dump_json(indent=2)}")
 
@@ -173,7 +168,6 @@ def debugger_agent(state: AgentState) -> AgentState:
         new_state["status"] = "BUGS_FOUND"
         new_state["last_output"] = bug_report
         return new_state
-
 
 # === Define Graph ===
 graph = StateGraph(AgentState)
