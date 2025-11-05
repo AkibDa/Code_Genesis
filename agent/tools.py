@@ -11,9 +11,15 @@ PROJECT_ROOT = pathlib.Path.cwd() / "generated_project"
 
 def safe_path_for_project(path: str) -> pathlib.Path:
   p = (PROJECT_ROOT / path).resolve()
-  if PROJECT_ROOT.resolve() not in p.parents and PROJECT_ROOT.resolve() != p.parent and PROJECT_ROOT.resolve() != p:
-    raise ValueError("Attempt to write outside project root")
+  root = PROJECT_ROOT.resolve()
+  try:
+    if not p.is_relative_to(root):
+      raise ValueError("Attempt to write outside project root")
+  except AttributeError:
+    if root not in p.parents and root != p:
+      raise ValueError("Attempt to write outside project root")
   return p
+
 
 
 @tool(name_or_callable="write_file")
@@ -52,11 +58,16 @@ def list_file(directory: str = ".") -> str:
   return "\n".join(files) if files else "No files found."
 
 @tool(name_or_callable="run_cmd")
-def run_cmd(cmd: str, cwd: str = None, timeout: int = 30) -> Tuple[int, str, str]:
-  """Runs a shell command in the specified directory and returns the result."""
+def run_cmd(cmd: str, cwd: str = None, timeout: int = 30) -> dict:
+  """Runs a shell command in the specified directory and returns the result as a dict."""
   cwd_dir = safe_path_for_project(cwd) if cwd else PROJECT_ROOT
   res = subprocess.run(cmd, shell=True, cwd=str(cwd_dir), capture_output=True, text=True, timeout=timeout)
-  return res.returncode, res.stdout, res.stderr
+  return {
+    "returncode": res.returncode,
+    "stdout": res.stdout,
+    "stderr": res.stderr
+  }
+
 
 
 def init_project_root():
