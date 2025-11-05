@@ -19,7 +19,10 @@ set_debug(True)
 set_verbose(True)
 
 # --- Define LLM and Tools ---
-llm = ChatGroq(model="openai/gpt-oss-120b")
+llm = ChatGroq(model="openai/gpt-oss-120b", 
+               timeout=60, 
+               max_retries=3,
+               temperature=0)
 
 # Define tools for each agent
 coder_tools = [read_file, write_file, list_file, get_current_directory, run_cmd]
