@@ -46,7 +46,7 @@ These agents are built using `langgraph.prebuilt.create_react_agent` and are equ
 
 1. **Clone the repository:**
 ```
-git clone [https://github.com/your-username/code_genesis.git](https://github.com/your-username/code_genesis.git)
+git clone [https://github.com/AkibDa/Code_Genesis.git](https://github.com/AkibDa/Code_Genesis.git)
 cd code_genesis
 ```
 
