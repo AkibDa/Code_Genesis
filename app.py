@@ -2,6 +2,7 @@
 
 import pathlib
 import shutil
+import tempfile
 from typing import Any, Dict
 
 import streamlit as st
@@ -17,8 +18,8 @@ def list_files(base: pathlib.Path) -> list[pathlib.Path]:
   return [p for p in base.rglob("*") if p.is_file()]
 
 
-st.set_page_config(page_title="AI Engineering Project Planner", layout="wide")
-st.title("🧪 AI Engineering Project Planner (LangGraph)")
+st.set_page_config(page_title="Code Genesis", layout="wide")
+st.title("Code Genesis: Let the Agents Build Your Code 🧑🏻‍💻")
 
 with st.sidebar:
   st.header("⚙️ Settings")
@@ -46,8 +47,22 @@ refresh_clicked = col_refresh.button("🔄 Refresh File List")
 
 status_placeholder = st.empty()
 
+# Initialize project root on app start
 init_project_root()
 
+# -- ZIP download helper --
+def make_project_zip(path: pathlib.Path) -> bytes:
+  """Create a zip archive of the project and return its bytes."""
+  if not path.exists():
+    return b""
+  with tempfile.TemporaryDirectory() as tmpdir:
+    archive_base = pathlib.Path(tmpdir) / "generated_project"
+    archive_path = shutil.make_archive(str(archive_base), 'zip', root_dir=str(path))
+    with open(archive_path, 'rb') as f:
+      data = f.read()
+  return data
+
+# -- Run agent --
 if run_clicked and user_prompt.strip():
   if clear_before_run and PROJECT_ROOT.exists():
     shutil.rmtree(PROJECT_ROOT)
@@ -65,6 +80,7 @@ if run_clicked and user_prompt.strip():
     st.subheader("Final State")
     st.json(result)
 
+    # Convenience views if present in state
     plan = result.get("plan")
     task_plan = result.get("task_plan")
     last_output = result.get("last_output")
@@ -94,16 +110,55 @@ if run_clicked and user_prompt.strip():
   except Exception as e:
     status_placeholder.error(f"Error: {e}")
 
+# File browser + download
 st.subheader("📁 generated_project contents")
 files = list_files(PROJECT_ROOT)
+
+col_zip, col_empty = st.columns([1,3])
+with col_zip:
+  if st.button("📦 Create & Download ZIP"):
+    zip_bytes = make_project_zip(PROJECT_ROOT)
+    if not zip_bytes:
+      st.warning("No project files to zip. Run the planner first.")
+    else:
+      st.download_button(
+        label="⬇️ Download generated_project.zip",
+        data=zip_bytes,
+        file_name="generated_project.zip",
+        mime="application/zip",
+      )
+
 if not files:
   st.caption("No files yet. Run the planner to generate your project.")
 else:
-  for p in files:
+  st.write(f"{len(files)} files found.")
+  for p in sorted(files):
     rel = p.relative_to(PROJECT_ROOT)
     with st.expander(str(rel), expanded=False):
       try:
         text = p.read_text(encoding="utf-8")
-        st.code(text)
+        st.write(f"Size: {p.stat().st_size} bytes")
+
+        # Buttons: view, copy (show textarea), download single file
+        btn_col1, btn_col2, btn_col3 = st.columns([1,1,1])
+        view = btn_col1.button("View", key=f"view-{rel}")
+        copy = btn_col2.button("Copy (open in editor)", key=f"copy-{rel}")
+        dl = btn_col3.download_button(
+          label="Download",
+          data=text.encode('utf-8'),
+          file_name=str(rel.name),
+          mime="text/plain",
+        )
+
+        if view:
+          st.code(text)
+
+        if copy:
+          st.text_area(f"Copy content: {rel}", value=text, height=400)
+
       except Exception:
         st.write("(Binary or unreadable file)")
+
+# Manual refresh control
+if refresh_clicked:
+  st.experimental_rerun()
