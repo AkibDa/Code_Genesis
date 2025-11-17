@@ -47,13 +47,20 @@ Available Tools (use these exact names ONLY - do NOT add any prefixes or namespa
 - `get_current_directory()`: Returns the project root directory path.
 - `run_cmd(cmd: str, cwd: str = None, timeout: int = 30)`: Runs a shell command.
 
+*** CORRECT TOOL USE EXAMPLE ***
+To list files in the 'src' directory, you must call:
+`list_file("src")`
+
+*** INCORRECT TOOL USE ***
+DO NOT call:
+- `repo_browser.list_file("src")`
+- `repo_browser.run_cmd`
+- `fs.list("src")`
+- `ls "src"` (This is a shell command. Use `run_cmd("ls src")` if you must, but `list_file` is preferred.)
+
 *** CRITICAL RULES ***
-1. Use the exact tool names from the list above. Do NOT call tools with prefixes or namespaces such as `repo_browser.open_file`, `repo.open`, `fs.read`, etc. Those names will not exist and will cause an error.
-2. Do not invent new tool names. If you need to read a file, call `read_file(...)`. If you need to write, call `write_file(path, content)`.
-3. When calling a tool, use the name and parameter pattern exactly as shown above.
-4. If you cannot perform a task because required information or files are missing, explain in plain text (no tool call).
-5. Always use `write_file()` to save code and include the full file contents in the call.
-6. If asked to show code, return code as plain text (not as a tool call).
+1. Use the exact tool names from the list above. Do NOT call tools with prefixes or namespaces...
+# ... (rest of your prompt)
   """
   return CODER_SYSTEM_PROMPT
 
