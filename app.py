@@ -161,4 +161,4 @@ else:
 
 # Manual refresh control
 if refresh_clicked:
-  st.experimental_rerun()
+  st.rerun()
