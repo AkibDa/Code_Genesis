@@ -53,8 +53,9 @@ To list files in the 'src' directory, you must call:
 
 *** INCORRECT TOOL USE ***
 DO NOT call:
-- `repo_browser.list_file("src")`
+- `repo_browser.list_file`
 - `repo_browser.run_cmd`
+-`repo_browser.read_file'`
 - `fs.list("src")`
 - `ls "src"` (This is a shell command. Use `run_cmd("ls src")` if you must, but `list_file` is preferred.)
 

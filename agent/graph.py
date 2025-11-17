@@ -1,5 +1,3 @@
-#agent/graph.py
-
 import pathlib
 from typing import TypedDict, Optional
 from dotenv import load_dotenv
@@ -47,6 +45,7 @@ class AgentState(TypedDict):
     coder_state: Optional[CoderState]
     status: Optional[str]
     last_output: Optional[str]
+    last_error: Optional[str]  # <-- NEW: For self-correction
 
 # === Define Graph Nodes ===
 
@@ -81,7 +80,11 @@ def architect_agent(state: AgentState) -> AgentState:
 def coder_agent(state: AgentState) -> AgentState:
     print("\n--- CODER AGENT ---")
     new_state = dict(state)
+    
+    # Get and clear the last error to prevent re-using it
+    last_error = new_state.pop("last_error", None)
 
+    # 1. Setup Coder State
     coder_state: Optional[CoderState] = new_state.get("coder_state")
     if coder_state is None:
         print("Coder: Starting new task plan.")
@@ -103,71 +106,143 @@ def coder_agent(state: AgentState) -> AgentState:
     print(f"[Task Description]: {current_task.task_description}")
 
     try:
-        existing_content = read_file.run(current_task.filepath)
-    except AttributeError:
         existing_content = read_file(current_task.filepath)
+    except Exception:
+        existing_content = "File not found or is empty."
+
+    # 2. Build Correction Prompt (if applicable)
+    error_correction_prompt = ""
+    if last_error:
+        print(f"\n[Coder RETRY]: Retrying step with error info: {last_error}")
+        error_correction_prompt = (
+            "Your previous attempt on this task failed. You must correct your action.\n"
+            f"ERROR: {last_error}\n"
+            "REMINDER: Review the available tools and their usage. "
+            "The *only* tools available are: `read_file`, `write_file`, `list_file`, `get_current_directory`, `run_cmd`.\n"
+            "Do not use prefixes like `repo_browser`.\n"
+            "--- Please try the task again ---\n\n"
+        )
 
     user_prompt = (
+        f"{error_correction_prompt}"
         f"Task: {current_task.task_description}\n"
         f"File: {current_task.filepath}\n"
         f"Existing content:\n{existing_content}\n\n"
         "Remember to use `write_file(path, content)` to save your *full* and *complete* changes."
     )
 
-    llm_response_dict = invoke_messages(
-        coder_react_agent,
-        [SystemMessage(content=coder_system_prompt()), HumanMessage(content=user_prompt)]
-    )
+    # 3. Run Agent with Error Handling
+    try:
+        llm_response_dict = invoke_messages(
+            coder_react_agent,
+            [SystemMessage(content=coder_system_prompt()), HumanMessage(content=user_prompt)]
+        )
+        
+        # --- SUCCESS ---
+        final_message = llm_response_dict.get('messages', [])[-1] if isinstance(llm_response_dict, dict) else None
+        llm_output = (final_message.content if final_message else str(llm_response_dict))
 
-    final_message = llm_response_dict.get('messages', [])[-1] if isinstance(llm_response_dict, dict) else None
-    llm_output = (final_message.content if final_message else str(llm_response_dict))
+        print(f"\n[Coder Output]:\n{llm_output}")
 
-    print(f"\n[Coder Output]:\n{llm_output}")
+        coder_state.current_file_content = llm_output
+        coder_state.current_step_idx += 1  # <-- IMPORTANT: Increment index on success
 
-    coder_state.current_file_content = llm_output
-    coder_state.current_step_idx += 1
+        new_state["coder_state"] = coder_state
+        new_state["status"] = "IN_PROGRESS"
+        new_state["last_output"] = coder_state.current_file_content
+        # new_state["last_error"] is already cleared
 
-    new_state["coder_state"] = coder_state
-    new_state["status"] = "IN_PROGRESS"
-    new_state["last_output"] = coder_state.current_file_content
+    except Exception as e:
+        # --- FAILURE ---
+        error_str = str(e)
+        print(f"\n[Coder ERROR]: {error_str}")
+
+        if "Tool call validation failed" in error_str or "Tool use failed" in error_str:
+            # Persist the error for the next loop
+            new_state["last_error"] = error_str
+            new_state["status"] = "IN_PROGRESS"  # Loop back to coder
+            new_state["coder_state"] = coder_state  # DO NOT increment index
+            new_state["last_output"] = f"Error occurred: {error_str}"
+        else:
+            # A different, unexpected error
+            raise e
+
     return new_state
 
 def debugger_agent(state: AgentState) -> AgentState:
     print("\n--- DEBUGGER AGENT ---")
     new_state = dict(state)
+    
+    # Get and clear the last error
+    last_error = new_state.pop("last_error", None)
 
     if "plan" not in new_state:
         raise ValueError("debugger_agent expects 'plan' in state.")
 
     plan_json = new_state["plan"].model_dump_json(indent=2)
-    debug_prompt = debugger_user_prompt(original_plan=plan_json)
-
-    llm_response_dict = invoke_messages(
-        debugger_react_agent,
-        [SystemMessage(content=debugger_system_prompt()), HumanMessage(content=debug_prompt)]
-    )
-    bug_report = llm_response_dict.get('messages', [])[-1].content
-    print(f"\n[Debugger Bug Report]:\n{bug_report}")
-
-    if bug_report.strip() == "LGTM":
-        print("\n[Debugger Status]: LGTM! Project Approved.")
-        new_state["status"] = "APPROVED"
-        return new_state
-    else:
-        print("\n[Debugger Status]: Bugs found. Generating fix plan...")
-        fix_prompt = debugger_fix_prompt(
-            bug_report=bug_report,
-            original_plan=plan_json
+    
+    # Build Correction Prompt
+    error_correction_prompt = ""
+    if last_error:
+        print(f"\n[Debugger RETRY]: Retrying with error info: {last_error}")
+        error_correction_prompt = (
+            "Your previous attempt to debug failed. You must correct your action.\n"
+            f"ERROR: {last_error}\n"
+            "REMINDER: Review the available tools. The *only* tools available are: `read_file`, `list_file`, `get_current_directory`, `run_cmd`.\n"
+            "Do not use prefixes like `repo_browser`.\n"
+            "--- Please try to debug the project again ---\n\n"
         )
-        fix_plan = invoke_structured(llm, TaskPlan, fix_prompt)
 
-        print(f"\n[Debugger Fix Plan]:\n{fix_plan.model_dump_json(indent=2)}")
+    debug_prompt = (
+        f"{error_correction_prompt}"
+        f"{debugger_user_prompt(original_plan=plan_json)}"
+    )
 
-        new_state["task_plan"] = fix_plan
-        new_state["coder_state"] = None
-        new_state["status"] = "BUGS_FOUND"
-        new_state["last_output"] = bug_report
-        return new_state
+    # Run Agent with Error Handling
+    try:
+        llm_response_dict = invoke_messages(
+            debugger_react_agent,
+            [SystemMessage(content=debugger_system_prompt()), HumanMessage(content=debug_prompt)]
+        )
+        
+        # --- SUCCESS ---
+        bug_report = llm_response_dict.get('messages', [])[-1].content
+        print(f"\n[Debugger Bug Report]:\n{bug_report}")
+
+        if bug_report.strip() == "LGTM":
+            print("\n[Debugger Status]: LGTM! Project Approved.")
+            new_state["status"] = "APPROVED"
+            return new_state
+        else:
+            print("\n[Debugger Status]: Bugs found. Generating fix plan...")
+            fix_prompt = debugger_fix_prompt(
+                bug_report=bug_report,
+                original_plan=plan_json
+            )
+            fix_plan = invoke_structured(llm, TaskPlan, fix_prompt)
+
+            print(f"\n[Debugger Fix Plan]:\n{fix_plan.model_dump_json(indent=2)}")
+
+            new_state["task_plan"] = fix_plan
+            new_state["coder_state"] = None
+            new_state["status"] = "BUGS_FOUND"
+            new_state["last_output"] = bug_report
+            return new_state
+
+    except Exception as e:
+        # --- FAILURE ---
+        error_str = str(e)
+        print(f"\n[Debugger ERROR]: {error_str}")
+
+        if "Tool call validation failed" in error_str or "Tool use failed" in error_str:
+            # Persist the error for the next loop
+            new_state["last_error"] = error_str
+            new_state["status"] = "DEBUGGER_ERROR"  # <-- NEW STATUS
+            new_state["last_output"] = f"Error occurred: {error_str}"
+            return new_state
+        else:
+            # A different, unexpected error
+            raise e
 
 # === Define Graph ===
 graph = StateGraph(AgentState)
@@ -182,16 +257,26 @@ graph.set_entry_point("planner")
 graph.add_edge("planner", "architect")
 graph.add_edge("architect", "coder")
 
+# Coder loop:
+# - If status is "DONE", go to "debugger"
+# - Otherwise (e.g., "IN_PROGRESS"), loop back to "coder"
+# This now handles both success (incremented index) and failure (same index + last_error)
 graph.add_conditional_edges(
     "coder",
     lambda s: "debugger" if s.get("status") == "DONE" else "coder",
     {"debugger": "debugger", "coder": "coder"}
 )
 
+# Debugger loop:
+# - If "BUGS_FOUND", go to "coder" to fix them
+# - If "APPROVED", end the graph
+# - If "DEBUGGER_ERROR", loop back to "debugger" to retry
 graph.add_conditional_edges(
     "debugger",
-    lambda s: "coder" if s.get("status") == "BUGS_FOUND" else "END",
-    {"coder": "coder", "END": END}
+    lambda s: "coder" if s.get("status") == "BUGS_FOUND" 
+              else "debugger" if s.get("status") == "DEBUGGER_ERROR" 
+              else "END",
+    {"coder": "coder", "debugger": "debugger", "END": END}
 )
 
 agent = graph.compile()
@@ -206,4 +291,3 @@ if __name__ == "__main__":
         {"recursion_limit": 100}
     )
     print("\n✅ Final State:\n", result)
-    
